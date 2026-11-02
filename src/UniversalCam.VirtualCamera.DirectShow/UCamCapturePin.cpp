@@ -15,7 +15,7 @@ struct FrameHeader
 #pragma pack(pop)
 static_assert(sizeof(FrameHeader) == 32, "Frame header must match the C# shared-memory layout");
 
-const AMOVIESETUP_MEDIATYPE sudOpPinTypes =
+extern const AMOVIESETUP_MEDIATYPE sudOpPinTypes =
     {
         &MEDIATYPE_Video,  // GUID of the media type
         &MEDIASUBTYPE_NV12 // GUID of the media subtype

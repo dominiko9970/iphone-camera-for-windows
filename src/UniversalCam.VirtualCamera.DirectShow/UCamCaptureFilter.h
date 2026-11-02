@@ -1,4 +1,6 @@
 #pragma once
+class UCamCapturePin;
+extern const AMOVIESETUP_FILTER sudFilterReg;
 
 // {745E0377-3903-48E6-8AD0-C190A3F298AF}
 DEFINE_GUID(CLSID_UCamCaptureFilter,

@@ -1,8 +1,8 @@
 #pragma once
 
 // Windows headers
-#include <windows.h>
 #include <winsock2.h>
+#include <windows.h>
 #include <mmsystem.h>
 #include <mmreg.h>
 

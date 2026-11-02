@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "UCamCaptureFilter.h"
 #include "UCamCapturePin.h"
+extern const AMOVIESETUP_MEDIATYPE sudOpPinTypes;
 
 const AMOVIESETUP_PIN sudPins[] =
     {
@@ -16,7 +17,7 @@ const AMOVIESETUP_PIN sudPins[] =
             &sudOpPinTypes // The pin details
         }};
 
-const AMOVIESETUP_FILTER sudFilterReg =
+extern const AMOVIESETUP_FILTER sudFilterReg =
     {
         &CLSID_UCamCaptureFilter,       // Filter CLSID
         L"UniversalCam Virtual Camera", // Filter name
@@ -47,5 +48,5 @@ UCamCaptureFilter::UCamCaptureFilter(IUnknown *punk, HRESULT *phr)
 
 UCamCaptureFilter::~UCamCaptureFilter()
 {
-    delete m_paStreams[0];
+    // CSource owns and deletes its registered streams.
 }
