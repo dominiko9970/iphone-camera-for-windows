@@ -174,6 +174,13 @@ HRESULT UCamCapturePin::FillBuffer(IMediaSample *pms)
 BOOL UCamCapturePin::TryReadFromMMF(BYTE *pData, long cbData, IMediaSample *pms)
 {
     EnterCriticalSection(&m_mmfMutex);
+    HANDLE frameMutex = CreateMutexW(nullptr, FALSE, L"UniversalCam_VCam_Frame_Lock");
+    DWORD wait = frameMutex ? WaitForSingleObject(frameMutex, 5) : WAIT_FAILED;
+    if (wait != WAIT_OBJECT_0 && wait != WAIT_ABANDONED) {
+        if (frameMutex) CloseHandle(frameMutex);
+        LeaveCriticalSection(&m_mmfMutex);
+        return FALSE;
+    }
 
     BOOL bSuccess = FALSE;
     try
@@ -244,6 +251,8 @@ BOOL UCamCapturePin::TryReadFromMMF(BYTE *pData, long cbData, IMediaSample *pms)
     }
 
 cleanup:
+    ReleaseMutex(frameMutex);
+    CloseHandle(frameMutex);
     LeaveCriticalSection(&m_mmfMutex);
     return bSuccess;
 }
