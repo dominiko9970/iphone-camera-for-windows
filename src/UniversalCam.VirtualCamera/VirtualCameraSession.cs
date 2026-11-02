@@ -60,14 +60,7 @@ public sealed class VirtualCameraSession : IDisposable
             return;
 
         var osVersion = Environment.OSVersion.Version;
-        if (osVersion.Build >= 22621)
-        {
-            // MF Virtual Camera temporarily disabled — IMFPresentationDescriptor GUID mismatch
-            // causes init to fail and leaves native COM event queue in unknown state.
-            // TODO: fix GUID and re-enable.
-            Console.WriteLine("[VirtualCamera] MF server skipped (GUID fix pending)");
-        }
-        else if (osVersion.Build >= 19041)
+        if (osVersion.Build >= 19041)
         {
             // Windows 10 21H2+: Use DirectShow
             try
