@@ -399,6 +399,7 @@ final class ConnectionManager: ObservableObject {
             let incomingIsUSB = (transport == .usb)
             guard activeTransport == nil || incomingIsUSB else { break }
             activeTransport = transport
+            if transport == .usb { wifiTransport.disconnect() }
 
             let hello = ControlMessage.hello(
                 deviceName: UIDevice.current.name,
