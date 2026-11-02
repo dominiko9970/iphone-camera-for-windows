@@ -94,6 +94,9 @@ public partial class MainWindow : Window
     private const int MaxVideoQueueDepth = 32;
     private int _decoderRunning;
     private long _lastVideoArrival;
+    private long _lastVideoPtsUs;
+    private long _maxSourceGapUs;
+    private long _maxTimingSlipUs;
     private long _videoStatsStart = Environment.TickCount64;
     private int _videoArrivals;
     private long _maxArrivalGap;
@@ -284,12 +287,19 @@ public partial class MainWindow : Window
         {
             long tick = Environment.TickCount64;
             long previous = System.Threading.Interlocked.Exchange(ref _lastVideoArrival, tick);
-            if (previous != 0) _maxArrivalGap = Math.Max(_maxArrivalGap, tick - previous);
+            long sourceGap = frame.Header.PtsUs - _lastVideoPtsUs;
+            if (previous != 0 && sourceGap > 0 && sourceGap < 10_000_000)
+            {
+                _maxArrivalGap = Math.Max(_maxArrivalGap, tick - previous);
+                _maxSourceGapUs = Math.Max(_maxSourceGapUs, sourceGap);
+                _maxTimingSlipUs = Math.Max(_maxTimingSlipUs, (tick - previous) * 1000 - sourceGap);
+            }
+            _lastVideoPtsUs = frame.Header.PtsUs;
             _videoArrivals++;
             if (tick - _videoStatsStart >= 1000)
             {
-                Console.WriteLine($"[VideoStats] received={_videoArrivals} elapsedMs={tick - _videoStatsStart} maxGapMs={_maxArrivalGap} queue={_videoQueue.Count} maxDecodeMs={System.Threading.Interlocked.Exchange(ref _maxDecodeMs, 0)}");
-                _videoArrivals = 0; _maxArrivalGap = 0; _videoStatsStart = tick;
+                Console.WriteLine($"[VideoStats] received={_videoArrivals} elapsedMs={tick - _videoStatsStart} maxGapMs={_maxArrivalGap} sourceGapMs={_maxSourceGapUs / 1000.0:F1} timingSlipMs={_maxTimingSlipUs / 1000.0:F1} queue={_videoQueue.Count} maxDecodeMs={System.Threading.Interlocked.Exchange(ref _maxDecodeMs, 0)}");
+                _videoArrivals = 0; _maxArrivalGap = 0; _maxSourceGapUs = 0; _maxTimingSlipUs = 0; _videoStatsStart = tick;
             }
             if (_videoQueue.Count >= MaxVideoQueueDepth)
             {
