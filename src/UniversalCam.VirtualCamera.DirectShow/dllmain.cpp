@@ -62,6 +62,8 @@ STDAPI DllUnregisterServer()
     return AMovieDllRegisterServer2(FALSE);
 }
 
+extern "C" BOOL WINAPI DllEntryPoint(HINSTANCE, ULONG, LPVOID);
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
     extern BOOL WINAPI DllEntryPoint(HINSTANCE, ULONG, LPVOID);
