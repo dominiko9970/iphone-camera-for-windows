@@ -19,7 +19,7 @@ internal sealed class DsVirtualCameraServer : IVirtualCameraServer
 
     private const string DllFileName = "UniversalCamVCam.dll";
     private const string RegistryPath = @"HKEY_LOCAL_MACHINE\Software\Classes\CLSID";
-    private const string FilterClsid = "{12345678-1234-1234-1234-123456789012}";  // TODO: Update with actual CLSID from C++ DLL
+    private const string FilterClsid = "{745E0377-3903-48E6-8AD0-C190A3F298AF}";
 
     public DsVirtualCameraServer(FrameBuffer frameBuffer, SharedMemoryBridge shmBridge)
     {
