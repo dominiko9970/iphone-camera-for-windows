@@ -1,0 +1,29 @@
+name: Build Windows app
+on:
+  push:
+    branches: [main]
+    paths: ['src/**', 'tests/**', 'global.json', 'NuGet.config', '.github/workflows/windows.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+      - name: Build Windows application
+        run: dotnet build src/UniversalCam/UniversalCam.csproj -c Release -p:Platform=x64
+      - name: Run unit tests
+        run: dotnet test tests/UniversalCam.Tests/UniversalCam.Tests.csproj -c Release -p:Platform=x64 --logger trx
+      - name: Publish portable Windows application
+        run: dotnet publish src/UniversalCam/UniversalCam.csproj -c Release -r win-x64 --self-contained true -p:Platform=x64 -o artifacts/windows
+      - uses: actions/upload-artifact@v4
+        with:
+          name: UniversalCam-Windows-x64
+          path: artifacts/windows/
+          if-no-files-found: error
+          retention-days: 7
