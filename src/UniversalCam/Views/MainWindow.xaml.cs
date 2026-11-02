@@ -277,9 +277,19 @@ public partial class MainWindow : Window
     {
         if (frame.IsVideo)
         {
+            if (_videoQueue.Count >= MaxVideoQueueDepth)
+            {
+                while (_videoQueue.TryDequeue(out _)) { }
+                System.Threading.Interlocked.Exchange(ref _waitingForVideoKeyframe, 1);
+                _decoder?.RequestReset();
+                Console.WriteLine("[Video] Decode backlog dropped; waiting for keyframe");
+            }
+            if (System.Threading.Volatile.Read(ref _waitingForVideoKeyframe) != 0)
+            {
+                if (!frame.Header.IsKeyframe) return;
+                System.Threading.Interlocked.Exchange(ref _waitingForVideoKeyframe, 0);
+            }
             _videoQueue.Enqueue(frame);
-            while (_videoQueue.Count > MaxVideoQueueDepth)
-                _videoQueue.TryDequeue(out _);
             if (System.Threading.Interlocked.CompareExchange(ref _decoderRunning, 1, 0) == 0)
                 System.Threading.Tasks.Task.Run(DrainVideoFrames);
         }
