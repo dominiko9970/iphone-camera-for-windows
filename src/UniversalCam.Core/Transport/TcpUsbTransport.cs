@@ -97,8 +97,8 @@ public sealed class TcpUsbTransport : ITransport
                 SetState(TransportState.Connected);
                 _parser.Reset();
 
-                // Initiate handshake: iOS waits for welcome before sending hello
-                _ = SendControlAsync(new Welcome());
+                // ConnectionManager sends Welcome on the Connected event.
+                // Do not send a second concurrent greeting on this stream.
 
                 _ = ReceiveLoopAsync(_stream, _cts!.Token);
             }
