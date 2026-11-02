@@ -72,7 +72,9 @@ final class USBTransport {
                 host: NWEndpoint.Host(host),
                 port: NWEndpoint.Port(rawValue: Self.port)!
             )
-            let params = NWParameters.tcp
+            let tcp = NWProtocolTCP.Options()
+            tcp.noDelay = true
+            let params = NWParameters(tls: nil, tcp: tcp)
             params.allowLocalEndpointReuse = true
 
             let conn = NWConnection(to: endpoint, using: params)
@@ -109,7 +111,9 @@ final class USBTransport {
         queue.async { [self] in
             guard listener == nil else { return }
             do {
-                let server = try NWListener(using: .tcp, on: 7781)
+                let tcp = NWProtocolTCP.Options()
+                tcp.noDelay = true
+                let server = try NWListener(using: NWParameters(tls: nil, tcp: tcp), on: 7781)
                 server.newConnectionHandler = { [weak self] conn in
                     guard let self else { return }
                     self.connection?.cancel()
