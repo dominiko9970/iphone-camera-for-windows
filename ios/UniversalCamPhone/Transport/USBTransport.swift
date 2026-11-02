@@ -75,19 +75,20 @@ final class USBTransport {
             self.connection = conn
 
             conn.stateUpdateHandler = { [weak self] state in
+                guard let self, self.connection === conn else { return }
                 switch state {
                 case .ready:
-                    self?.onStateChange?(.connected)
+                    self.onStateChange?(.connected)
                     print("[USBTransport] Connected to PC at \(host):\(Self.port)")
                 case .failed(let error):
-                    self?.connection = nil
-                    self?.receiveBuffer = Data()
-                    self?.onStateChange?(.failed(error.localizedDescription))
+                    self.connection = nil
+                    self.receiveBuffer = Data()
+                    self.onStateChange?(.failed(error.localizedDescription))
                     print("[USBTransport] Connection failed: \(error)")
                 case .cancelled:
-                    self?.connection = nil
-                    self?.receiveBuffer = Data()
-                    self?.onStateChange?(.disconnected)
+                    self.connection = nil
+                    self.receiveBuffer = Data()
+                    self.onStateChange?(.disconnected)
                 default:
                     break
                 }
