@@ -19,6 +19,7 @@ public sealed class SharedMemoryBridge : IDisposable
     private MemoryMappedFile? _mmf;
     private MemoryMappedViewAccessor? _accessor;
     private readonly object _lock = new();
+    private readonly System.Threading.Mutex _frameMutex = new(false, "UniversalCam_VCam_Frame_Lock");
     private bool _disposed;
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]
@@ -42,6 +43,12 @@ public sealed class SharedMemoryBridge : IDisposable
 
         lock (_lock)
         {
+            bool acquired;
+            try { acquired = _frameMutex.WaitOne(5); }
+            catch (System.Threading.AbandonedMutexException) { acquired = true; }
+            if (!acquired) return;
+            try
+            {
             EnsureOpen();
 
             if (frame.Data.Length > MaxFrameSize)
@@ -71,6 +78,8 @@ public sealed class SharedMemoryBridge : IDisposable
 
             // Write frame data
             _accessor!.WriteArray(HeaderSize, frame.Data, 0, frame.Data.Length);
+            }
+            finally { _frameMutex.ReleaseMutex(); }
         }
     }
 
@@ -100,6 +109,7 @@ public sealed class SharedMemoryBridge : IDisposable
 
             _accessor?.Dispose();
             _mmf?.Dispose();
+            _frameMutex.Dispose();
             _disposed = true;
         }
     }
