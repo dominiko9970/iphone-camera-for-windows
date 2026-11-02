@@ -93,6 +93,7 @@ public partial class MainWindow : Window
     private readonly System.Collections.Concurrent.ConcurrentQueue<MediaFrame> _videoQueue = new();
     private const int MaxVideoQueueDepth = 32;
     private int _decoderRunning;
+    private int _waitingForVideoKeyframe;
 
     // ── iPhone audio toggle ────────────────────────────────────────────────────
     private bool _phoneAudioEnabled = true;
