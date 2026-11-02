@@ -1,0 +1,2 @@
+#define IDR_UCAMVCAM 101
+#define IDS_FILTER_NAME 1001

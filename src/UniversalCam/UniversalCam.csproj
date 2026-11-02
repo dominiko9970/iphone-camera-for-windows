@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+        <OutputType>WinExe</OutputType>
+        <UseWPF>true</UseWPF>
+
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <RootNamespace>UniversalCam</RootNamespace>
+
+        <!-- x64 only for Phase 1–3 -->
+        <Platforms>x64</Platforms>
+        <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+
+        <!-- Per-monitor DPI awareness -->
+        <ApplicationManifest>app.manifest</ApplicationManifest>
+        <ApplicationIcon>universal_cam.ico</ApplicationIcon>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <Resource Include="universal_cam.ico" />
+        <Resource Include="Assets\wordmark.png" />
+    </ItemGroup>
+
+    <!-- Reference WinForms assembly for NotifyIcon — without UseWindowsForms so no implicit usings are injected -->
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.WindowsDesktop.App.WindowsForms" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\UniversalCam.Core\UniversalCam.Core.csproj" />
+        <ProjectReference Include="..\UniversalCam.VirtualCamera\UniversalCam.VirtualCamera.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- Ensures native FFmpeg DLLs land next to UniversalCam.exe -->
+        <PackageReference Include="Sdcb.FFmpeg.runtime.windows-x64" Version="6.0.26" />
+        <!-- WASAPI audio output -->
+        <PackageReference Include="NAudio.Wasapi" Version="2.2.1" />
+    </ItemGroup>
+</Project>

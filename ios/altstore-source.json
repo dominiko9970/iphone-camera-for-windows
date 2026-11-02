@@ -1,0 +1,39 @@
+{
+  "name": "UniversalCam",
+  "identifier": "com.universalcam.phone.altstore",
+  "subtitle": "Use your iPhone as a wireless camera for your PC",
+  "sourceURL": "https://YOUR_HOST/altstore-source.json",
+  "apps": [
+    {
+      "name": "UniversalCam",
+      "bundleIdentifier": "com.universalcam.phone",
+      "developerName": "UniversalCam",
+      "version": "0.1.0",
+      "versionDate": "2026-03-16",
+      "versionDescription": "Initial release. Stream your iPhone camera to your Windows PC over WiFi with low-latency H.264 video and AAC audio.",
+      "downloadURL": "https://YOUR_HOST/UniversalCam.ipa",
+      "localizedDescription": "UniversalCam turns your iPhone into a wireless camera for your Windows PC. It streams H.264 video and AAC audio over QUIC with ultra-low latency on your local network.",
+      "iconURL": "https://YOUR_HOST/universal_cam_ios_1024.png",
+      "size": 0,
+      "permissions": [
+        {
+          "type": "camera",
+          "usageDescription": "UniversalCam uses your camera to stream video to your Windows PC."
+        },
+        {
+          "type": "microphone",
+          "usageDescription": "UniversalCam uses your microphone to stream audio to your Windows PC."
+        },
+        {
+          "type": "local-network",
+          "usageDescription": "UniversalCam connects to your Windows PC on the local network."
+        },
+        {
+          "type": "background-audio",
+          "usageDescription": "UniversalCam continues streaming when in the background."
+        }
+      ]
+    }
+  ],
+  "news": []
+}

@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "ms-dotnettools.csharp",
+    "ms-dotnettools.csdevkit",
+    "redhat.vscode-xml",
+    "EditorConfig.EditorConfig",
+    "aliasadidev.nugetpackagemanagergui",
+    "tamasfe.even-better-toml"
+  ]
+}

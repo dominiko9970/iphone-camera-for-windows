@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <ItemGroup Label="ProjectConfigurations">
+        <ProjectConfiguration Include="Debug|x64">
+            <Configuration>Debug</Configuration>
+            <Platform>x64</Platform>
+        </ProjectConfiguration>
+        <ProjectConfiguration Include="Release|x64">
+            <Configuration>Release</Configuration>
+            <Platform>x64</Platform>
+        </ProjectConfiguration>
+    </ItemGroup>
+
+    <PropertyGroup Label="Globals">
+        <VCProjectVersion>17.0</VCProjectVersion>
+        <ProjectGuid>{3E8A5D2F-4B2C-4A9F-B1E2-6C3D7A8F9B5C}</ProjectGuid>
+        <RootNamespace>UniversalCamVCamDS</RootNamespace>
+        <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    </PropertyGroup>
+
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+
+    <PropertyGroup>
+        <ConfigurationType>DynamicLibrary</ConfigurationType>
+        <PlatformToolset>v143</PlatformToolset>
+        <CharacterSet>Unicode</CharacterSet>
+    </PropertyGroup>
+
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+
+    <ImportGroup Label="ExtensionSettings">
+    </ImportGroup>
+
+    <ImportGroup Label="PropertySheets">
+        <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props"
+            condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')"
+            Label="LocalAppDataPlatform" />
+    </ImportGroup>
+
+    <PropertyGroup Label="UserMacros" />
+
+    <PropertyGroup>
+        <OutDir>$(SolutionDir)src\UniversalCam\bin\$(Platform)\$(Configuration)\</OutDir>
+
+        <!-- Target filename for C# P/Invoke -->
+        <TargetName>UniversalCamVCam</TargetName>
+    </PropertyGroup>
+
+    <!-- Include Directories -->
+    <ItemDefinitionGroup>
+        <ClCompile>
+            <PrecompiledHeader>Use</PrecompiledHeader>
+            <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+            <WarningLevel>Level4</WarningLevel>
+            <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+            <AdditionalIncludeDirectories>
+                $(WindowsSDK_IncludePath);
+                $(DXSDK_DIR)\Include;
+                .
+            </AdditionalIncludeDirectories>
+            <PreprocessorDefinitions>
+                _UNICODE;
+                UNICODE;
+                WIN32;
+                _WINDOWS;
+                _USRDLL;
+                UNIVERSALCAMVCAMDS_EXPORTS;
+                %(PreprocessorDefinitions)
+            </PreprocessorDefinitions>
+        </ClCompile>
+
+        <Link>
+            <SubSystem>Windows</SubSystem>
+            <GenerateDebugInformation>true</GenerateDebugInformation>
+            <AdditionalLibraryDirectories>
+                $(WindowsSDK_LibPath);
+                $(DXSDK_DIR)\Lib\x64;
+            </AdditionalLibraryDirectories>
+            <AdditionalDependencies>
+                kernel32.lib;
+                user32.lib;
+                gdi32.lib;
+                winspool.lib;
+                comdlg32.lib;
+                advapi32.lib;
+                shell32.lib;
+                ole32.lib;
+                oleaut32.lib;
+                uuid.lib;
+                odbc32.lib;
+                odbccp32.lib;
+                strmiids.lib;
+                strmbase.lib;
+                winmm.lib;
+                %(AdditionalDependencies)
+            </AdditionalDependencies>
+            <ModuleDefinitionFile>UCamVCam.def</ModuleDefinitionFile>
+        </Link>
+    </ItemDefinitionGroup>
+
+    <!-- Debug-specific settings -->
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+        <ClCompile>
+            <Optimization>Disabled</Optimization>
+            <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+        </ClCompile>
+    </ItemDefinitionGroup>
+
+    <!-- Release-specific settings -->
+    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+        <ClCompile>
+            <Optimization>MaxSpeed</Optimization>
+            <FunctionLevelLinking>true</FunctionLevelLinking>
+            <IntrinsicFunctions>true</IntrinsicFunctions>
+        </ClCompile>
+        <Link>
+            <EnableCOMDATFolding>true</EnableCOMDATFolding>
+            <OptimizeReferences>true</OptimizeReferences>
+        </Link>
+    </ItemDefinitionGroup>
+
+    <ItemGroup>
+        <ClInclude Include="pch.h" />
+        <ClInclude Include="UCamCapturePin.h" />
+        <ClInclude Include="UCamCaptureFilter.h" />
+        <ClInclude Include="resource.h" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ClCompile Include="pch.cpp">
+            <PrecompiledHeader>Create</PrecompiledHeader>
+        </ClCompile>
+        <ClCompile Include="UCamCapturePin.cpp" />
+        <ClCompile Include="UCamCaptureFilter.cpp" />
+        <ClCompile Include="dllmain.cpp" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ResourceCompile Include="UCamVCam.rc" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="UCamVCam.def" />
+    </ItemGroup>
+
+    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+    <ImportGroup Label="ExtensionTargets">
+    </ImportGroup>
+</Project>

@@ -1,0 +1,14 @@
+MFStartup
+MFCreateVirtualCamera
+MFCreateMediaType
+MFCreateSample
+MFCreateMemoryBuffer
+IMFVirtualCamera
+IMFMediaSource
+IMFMediaStream
+IMFMediaEventGenerator
+IMFMediaEvent
+IMFMediaType
+IMFSample
+IMFMediaBuffer
+IMFAttributes
