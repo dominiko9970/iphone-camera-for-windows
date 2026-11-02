@@ -212,6 +212,9 @@ BOOL UCamCapturePin::TryReadFromMMF(BYTE *pData, long cbData, IMediaSample *pms)
             cbData < static_cast<long>(dw * dh * 3 / 2)) goto cleanup;
         const BYTE* src = m_pMapView + 64;
         // Keep the negotiated output format fixed; scale phone frames to it.
+        if (sw == dw && sh == dh) {
+            CopyMemory(pData, src, dw * dh * 3 / 2);
+        } else {
         for (unsigned y = 0; y < dh; ++y)
             for (unsigned x = 0; x < dw; ++x)
                 pData[y * dw + x] = src[(y * sh / dh) * sw + x * sw / dw];
@@ -221,6 +224,7 @@ BOOL UCamCapturePin::TryReadFromMMF(BYTE *pData, long cbData, IMediaSample *pms)
                 unsigned to = dw * dh + y * dw + x * 2;
                 pData[to] = src[from]; pData[to + 1] = src[from + 1];
             }
+        }
         pms->SetActualDataLength(dw * dh * 3 / 2);
 
         // Translate PTS: C# uses microseconds, DirectShow uses 100ns units
