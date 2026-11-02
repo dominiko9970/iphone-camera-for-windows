@@ -1,8 +1,17 @@
 #pragma once
 
-class UCamCapturePin : public CSourceStream
+class UCamCapturePin : public CSourceStream, public IAMStreamConfig, public IKsPropertySet
 {
 public:
+    DECLARE_IUNKNOWN;
+    STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void** ppv) override;
+    STDMETHODIMP SetFormat(AM_MEDIA_TYPE* mt) override;
+    STDMETHODIMP GetFormat(AM_MEDIA_TYPE** mt) override;
+    STDMETHODIMP GetNumberOfCapabilities(int* count, int* size) override;
+    STDMETHODIMP GetStreamCaps(int index, AM_MEDIA_TYPE** mt, BYTE* caps) override;
+    STDMETHODIMP Set(REFGUID, DWORD, LPVOID, DWORD, LPVOID, DWORD) override { return E_NOTIMPL; }
+    STDMETHODIMP Get(REFGUID set, DWORD id, LPVOID, DWORD, LPVOID data, DWORD size, DWORD* returned) override;
+    STDMETHODIMP QuerySupported(REFGUID set, DWORD id, DWORD* support) override;
     UCamCapturePin(HRESULT *phr, CSource *pFilter);
     ~UCamCapturePin();
 
