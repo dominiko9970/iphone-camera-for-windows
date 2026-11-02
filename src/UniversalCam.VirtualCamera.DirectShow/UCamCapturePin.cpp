@@ -2,15 +2,18 @@
 #include "UCamCapturePin.h"
 
 // Frame header structure matching C# SharedMemoryBridge
+#pragma pack(push, 1)
 struct FrameHeader
 {
     DWORD width;
     DWORD height;
     DWORD stride;
     DWORD dataSize;
-    DWORD sequenceNo;
+    LONGLONG sequenceNo;
     LONGLONG ptsUs;
 };
+#pragma pack(pop)
+static_assert(sizeof(FrameHeader) == 32, "Frame header must match the C# shared-memory layout");
 
 const AMOVIESETUP_MEDIATYPE sudOpPinTypes =
     {
@@ -211,7 +214,8 @@ BOOL UCamCapturePin::TryReadFromMMF(BYTE *pData, long cbData, IMediaSample *pms)
         }
 
         // Copy NV12 frame data
-        const BYTE *pFrameData = m_pMapView + sizeof(FrameHeader);
+        // C# reserves 64 bytes even though the metadata struct occupies 32.
+        const BYTE *pFrameData = m_pMapView + 64;
         CopyMemory(pData, pFrameData, pHeader->dataSize);
         pms->SetActualDataLength(pHeader->dataSize);
 
