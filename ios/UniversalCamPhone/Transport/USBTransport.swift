@@ -52,6 +52,7 @@ final class USBTransport {
     private var receiveBuffer = Data()
 
     /// Flow control: number of sends in flight (not yet completed).
+    private var waitingForVideoKeyframe = false
     private var sendsInFlight = 0
     private static let maxSendsInFlight = 30
 
@@ -158,6 +159,7 @@ final class USBTransport {
         sendsInFlight += 1
         conn.send(content: data, completion: .contentProcessed { [weak self] error in
             guard let self else { return }
+            guard self.connection === conn else { return }
             self.sendsInFlight = max(0, self.sendsInFlight - 1)
             if let error {
                 print("[USBTransport] Send error: \(error)")
