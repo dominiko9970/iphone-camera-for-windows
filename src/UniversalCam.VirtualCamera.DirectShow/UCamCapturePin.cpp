@@ -143,6 +143,9 @@ HRESULT UCamCapturePin::FillBuffer(IMediaSample *pms)
     if (FAILED(hr))
         return hr;
 
+    // Pace this live source even when no phone is connected.
+    Sleep(static_cast<DWORD>(m_videoInfo.AvgTimePerFrame / 10000));
+
     // Attempt to read from SharedMemoryBridge
     if (TryReadFromMMF(pData, cbData, pms))
     {
@@ -220,7 +223,7 @@ BOOL UCamCapturePin::TryReadFromMMF(BYTE *pData, long cbData, IMediaSample *pms)
         pms->SetActualDataLength(pHeader->dataSize);
 
         // Translate PTS: C# uses microseconds, DirectShow uses 100ns units
-        LONGLONG rtStart = pHeader->ptsUs * 10;
+        LONGLONG rtStart = m_rtLastSampleTime;
         LONGLONG rtStop = rtStart + m_videoInfo.AvgTimePerFrame;
 
         pms->SetTime(&rtStart, &rtStop);
