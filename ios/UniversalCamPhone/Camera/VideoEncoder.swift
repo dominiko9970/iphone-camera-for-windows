@@ -90,8 +90,8 @@ final class VideoEncoder {
         let dur = CMSampleBufferGetDuration(sampleBuffer)
 
         var flags: VTEncodeInfoFlags = []
-        // Force keyframe every 2 seconds (at 30fps = 60 frames)
-        let forceKeyframe = frameCount % 60 == 0
+        // Bound reference-chain recovery to roughly one second at the configured frame rate.
+        let forceKeyframe = frameCount % max(1, Int(lastFPS)) == 0
         let frameProperties: CFDictionary? = forceKeyframe
             ? [kVTEncodeFrameOptionKey_ForceKeyFrame: true] as CFDictionary
             : nil
