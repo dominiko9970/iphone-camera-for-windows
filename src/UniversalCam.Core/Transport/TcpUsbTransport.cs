@@ -50,6 +50,7 @@ public sealed class TcpUsbTransport : ITransport
             Console.WriteLine($"[TcpUsbTransport] Listening on TCP port {Port}");
 
             _ = AcceptLoopAsync(_cts.Token);
+            _ = UsbConnectLoopAsync(_cts.Token);
         }
         catch (Exception ex)
         {
@@ -88,25 +89,51 @@ public sealed class TcpUsbTransport : ITransport
                 var client = await _listener.AcceptTcpClientAsync(ct);
                 Console.WriteLine($"[TcpUsbTransport] iPhone connected: {client.Client.RemoteEndPoint}");
 
-                // Drop existing connection if any
-                _client?.Close();
-                _stream?.Dispose();
-
-                _client = client;
-                _stream = client.GetStream();
-                SetState(TransportState.Connected);
-                _parser.Reset();
-
-                // ConnectionManager sends Welcome on the Connected event.
-                // Do not send a second concurrent greeting on this stream.
-
-                _ = ReceiveLoopAsync(_stream, _cts!.Token);
+                AdoptClient(client);
             }
             catch (OperationCanceledException) { break; }
             catch (Exception ex) when (!ct.IsCancellationRequested)
             {
                 Console.WriteLine($"[TcpUsbTransport] Accept error: {ex.Message}");
             }
+        }
+    }
+
+    private readonly object _sessionLock = new();
+    private void AdoptClient(TcpClient client)
+    {
+        lock (_sessionLock)
+        {
+            _client?.Close();
+            _stream?.Dispose();
+            _client = client;
+            client.NoDelay = true;
+            _stream = client.GetStream();
+            _parser.Reset();
+            SetState(TransportState.Connected);
+            _ = ReceiveLoopAsync(_stream, _cts!.Token);
+        }
+    }
+
+    private async Task UsbConnectLoopAsync(CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            try
+            {
+                if (_stream == null)
+                {
+                    var client = await AppleUsbConnection.TryConnectAsync(ct);
+                    if (client != null)
+                    {
+                        Console.WriteLine("[TcpUsbTransport] Apple USB cable tunnel connected (device port 7781)");
+                        AdoptClient(client);
+                    }
+                }
+                await Task.Delay(2000, ct);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested) { break; }
+            catch { try { await Task.Delay(2000, ct); } catch (OperationCanceledException) { break; } }
         }
     }
 
@@ -131,6 +158,9 @@ public sealed class TcpUsbTransport : ITransport
         {
             if (_stream == stream) // only update state if this is still the active stream
             {
+                _stream = null;
+                _client?.Dispose();
+                _client = null;
                 SetState(TransportState.Disconnected);
                 _parser.Reset();
                 Console.WriteLine("[TcpUsbTransport] iPhone disconnected — still listening for reconnect");
