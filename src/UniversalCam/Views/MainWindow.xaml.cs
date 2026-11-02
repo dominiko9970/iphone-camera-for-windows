@@ -93,6 +93,11 @@ public partial class MainWindow : Window
     private readonly System.Collections.Concurrent.ConcurrentQueue<MediaFrame> _videoQueue = new();
     private const int MaxVideoQueueDepth = 32;
     private int _decoderRunning;
+    private long _lastVideoArrival;
+    private long _videoStatsStart = Environment.TickCount64;
+    private int _videoArrivals;
+    private long _maxArrivalGap;
+    private long _maxDecodeMs;
     private int _waitingForVideoKeyframe;
 
     // ── iPhone audio toggle ────────────────────────────────────────────────────
@@ -277,6 +282,15 @@ public partial class MainWindow : Window
     {
         if (frame.IsVideo)
         {
+            long tick = Environment.TickCount64;
+            long previous = System.Threading.Interlocked.Exchange(ref _lastVideoArrival, tick);
+            if (previous != 0) _maxArrivalGap = Math.Max(_maxArrivalGap, tick - previous);
+            _videoArrivals++;
+            if (tick - _videoStatsStart >= 1000)
+            {
+                Console.WriteLine($"[VideoStats] received={_videoArrivals} elapsedMs={tick - _videoStatsStart} maxGapMs={_maxArrivalGap} queue={_videoQueue.Count} maxDecodeMs={System.Threading.Interlocked.Exchange(ref _maxDecodeMs, 0)}");
+                _videoArrivals = 0; _maxArrivalGap = 0; _videoStatsStart = tick;
+            }
             if (_videoQueue.Count >= MaxVideoQueueDepth)
             {
                 while (_videoQueue.TryDequeue(out _)) { }
@@ -304,7 +318,12 @@ public partial class MainWindow : Window
     {
         while (_videoQueue.TryDequeue(out var frame))
         {
-            try { _decoder?.Feed(frame); }
+            try {
+                long started = Environment.TickCount64;
+                _decoder?.Feed(frame);
+                long elapsed = Environment.TickCount64 - started;
+                if (elapsed > _maxDecodeMs) System.Threading.Interlocked.Exchange(ref _maxDecodeMs, elapsed);
+            }
             catch (Exception ex) { Console.WriteLine($"[MainWindow] Decode error: {ex.GetType().Name}: {ex.Message}"); }
         }
         System.Threading.Interlocked.Exchange(ref _decoderRunning, 0);
@@ -622,6 +641,10 @@ public partial class MainWindow : Window
             _                                   => ("1920x1080", 30,  8_000_000),
         };
 
+        if (int.TryParse(Environment.GetEnvironmentVariable("UNIVERSALCAM_TEST_BITRATE"), out int testBitrate)
+            && testBitrate >= 1_000_000 && testBitrate <= 50_000_000)
+            bitrate = testBitrate;
+        Console.WriteLine($"[VideoTest] configure {res} {fps}fps bitrate={bitrate}");
         await _cm.ConfigureAsync(res, fps, "h264", bitrate);
     }
 
