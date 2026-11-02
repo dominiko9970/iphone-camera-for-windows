@@ -264,7 +264,7 @@ private struct SettingsView: View {
                 Section("Manual Connect") {
                     HStack {
                         TextField("PC IP address (e.g. 192.168.1.5)", text: $manualIP)
-                            .keyboardType(.decimalPad)
+                            .keyboardType(.asciiCapable)
                             .autocorrectionDisabled()
                             .textInputAutocapitalization(.never)
                         if !manualIP.isEmpty {
