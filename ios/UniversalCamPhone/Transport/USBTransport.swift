@@ -45,7 +45,10 @@ final class USBTransport {
 
     // MARK: - Private (accessed on `queue`)
 
+    private var listener: NWListener?
     private var connection: NWConnection?
+
+    init() { startListening() }
     private let queue = DispatchQueue(label: "com.universalcam.tcp", qos: .userInteractive)
 
     /// Accumulation buffer for reassembling TCP segments into complete messages.
@@ -103,7 +106,37 @@ final class USBTransport {
 
     /// Legacy API — kept so ConnectionManager doesn't need changes
     func startListening() {
-        // No-op: connection is initiated by connect(to:) when PC IP is known
+        queue.async { [self] in
+            guard listener == nil else { return }
+            do {
+                let server = try NWListener(using: .tcp, on: 7781)
+                server.newConnectionHandler = { [weak self] conn in
+                    guard let self else { return }
+                    self.connection?.cancel()
+                    self.connection = conn
+                    self.receiveBuffer = Data()
+                    self.sendsInFlight = 0
+                    self.waitingForVideoKeyframe = true
+                    conn.stateUpdateHandler = { [weak self] state in
+                        guard let self, self.connection === conn else { return }
+                        switch state {
+                        case .ready: self.onStateChange?(.connected)
+                        case .failed(let error):
+                            self.connection = nil
+                            self.onStateChange?(.failed(error.localizedDescription))
+                        case .cancelled:
+                            self.connection = nil
+                            self.onStateChange?(.disconnected)
+                        default: break
+                        }
+                    }
+                    conn.start(queue: self.queue)
+                    self.receiveLoop(conn)
+                }
+                server.start(queue: queue)
+                listener = server
+            } catch { onStateChange?(.failed(error.localizedDescription)) }
+        }
     }
 
     func stopListening() {
