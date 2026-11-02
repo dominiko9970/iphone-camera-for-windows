@@ -205,22 +205,23 @@ BOOL UCamCapturePin::TryReadFromMMF(BYTE *pData, long cbData, IMediaSample *pms)
             goto cleanup; // Invalid frame; use black placeholder
         }
 
-        int expectedSize = pHeader->width * pHeader->height * 3 / 2;
-        if (pHeader->dataSize != expectedSize)
-        {
-            goto cleanup; // Size mismatch; use black placeholder
-        }
-
-        if ((int)pHeader->dataSize > cbData)
-        {
-            goto cleanup; // Frame too large for buffer
-        }
-
-        // Copy NV12 frame data
-        // C# reserves 64 bytes even though the metadata struct occupies 32.
-        const BYTE *pFrameData = m_pMapView + 64;
-        CopyMemory(pData, pFrameData, pHeader->dataSize);
-        pms->SetActualDataLength(pHeader->dataSize);
+        const unsigned sw = pHeader->width, sh = pHeader->height;
+        const unsigned dw = m_videoInfo.bmiHeader.biWidth, dh = m_videoInfo.bmiHeader.biHeight;
+        if (sw > 3840 || sh > 2160 || (sw & 1) || (sh & 1) ||
+            pHeader->stride != sw || pHeader->dataSize != sw * sh * 3 / 2 ||
+            cbData < static_cast<long>(dw * dh * 3 / 2)) goto cleanup;
+        const BYTE* src = m_pMapView + 64;
+        // Keep the negotiated output format fixed; scale phone frames to it.
+        for (unsigned y = 0; y < dh; ++y)
+            for (unsigned x = 0; x < dw; ++x)
+                pData[y * dw + x] = src[(y * sh / dh) * sw + x * sw / dw];
+        for (unsigned y = 0; y < dh / 2; ++y)
+            for (unsigned x = 0; x < dw / 2; ++x) {
+                unsigned from = sw * sh + (y * (sh / 2) / (dh / 2)) * sw + (x * (sw / 2) / (dw / 2)) * 2;
+                unsigned to = dw * dh + y * dw + x * 2;
+                pData[to] = src[from]; pData[to + 1] = src[from + 1];
+            }
+        pms->SetActualDataLength(dw * dh * 3 / 2);
 
         // Translate PTS: C# uses microseconds, DirectShow uses 100ns units
         LONGLONG rtStart = m_rtLastSampleTime;
@@ -228,20 +229,6 @@ BOOL UCamCapturePin::TryReadFromMMF(BYTE *pData, long cbData, IMediaSample *pms)
 
         pms->SetTime(&rtStart, &rtStop);
         m_rtLastSampleTime = rtStop;
-
-        // Update resolution if changed
-        if ((int)pHeader->width != m_videoInfo.bmiHeader.biWidth ||
-            (int)pHeader->height != m_videoInfo.bmiHeader.biHeight)
-        {
-            // Note: In production, would need to signal pin reconnection to change format
-            // For now, just update the cached values
-            if (pHeader->dataSize == (DWORD)(pHeader->width * pHeader->height * 3 / 2))
-            {
-                m_videoInfo.bmiHeader.biWidth = pHeader->width;
-                m_videoInfo.bmiHeader.biHeight = pHeader->height;
-                m_videoInfo.bmiHeader.biSizeImage = pHeader->dataSize;
-            }
-        }
 
         m_dwFrameCount++;
         pms->SetSyncPoint(TRUE);
