@@ -1,0 +1,26 @@
+name: Build DirectShow camera
+on:
+  push:
+    branches: [main]
+    paths: ['src/UniversalCam.VirtualCamera.DirectShow/**', '.github/workflows/camera.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch Microsoft DirectShow baseclasses
+        run: git clone --depth 1 --filter=blob:none --sparse https://github.com/microsoft/Windows-classic-samples.git vendor
+      - run: git -C vendor sparse-checkout set Samples/Win7Samples/multimedia/directshow/baseclasses
+      - name: Configure
+        run: cmake -S src/UniversalCam.VirtualCamera.DirectShow -B native-build -A x64 "-DBASECLASSES_DIR=${{ github.workspace }}/vendor/Samples/Win7Samples/multimedia/directshow/baseclasses"
+      - name: Compile
+        run: cmake --build native-build --config Release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: UniversalCam-VirtualCamera-x64
+          path: native-build/Release/UniversalCamVCam.dll
+          if-no-files-found: error
