@@ -262,3 +262,51 @@ void UCamCapturePin::CleanupMemoryMappedFile()
 
     LeaveCriticalSection(&m_mmfMutex);
 }
+
+STDMETHODIMP UCamCapturePin::NonDelegatingQueryInterface(REFIID riid, void** ppv) {
+    if (riid == IID_IAMStreamConfig) return GetInterface(static_cast<IAMStreamConfig*>(this), ppv);
+    if (riid == IID_IKsPropertySet) return GetInterface(static_cast<IKsPropertySet*>(this), ppv);
+    return CSourceStream::NonDelegatingQueryInterface(riid, ppv);
+}
+STDMETHODIMP UCamCapturePin::GetFormat(AM_MEDIA_TYPE** mt) {
+    if (!mt) return E_POINTER;
+    CMediaType type; HRESULT hr = GetMediaType(0, &type);
+    if (FAILED(hr)) return hr;
+    *mt = CreateMediaType(&type); return *mt ? S_OK : E_OUTOFMEMORY;
+}
+STDMETHODIMP UCamCapturePin::SetFormat(AM_MEDIA_TYPE* mt) {
+    if (!mt) return E_POINTER;
+    CMediaType type(*mt); HRESULT hr = CheckMediaType(&type);
+    if (FAILED(hr)) return hr;
+    auto vih = reinterpret_cast<VIDEOINFOHEADER*>(type.Format());
+    if (!vih || vih->bmiHeader.biWidth != 1920 || vih->bmiHeader.biHeight != 1080) return VFW_E_TYPE_NOT_ACCEPTED;
+    return SetMediaType(&type);
+}
+STDMETHODIMP UCamCapturePin::GetNumberOfCapabilities(int* count, int* size) {
+    if (!count || !size) return E_POINTER;
+    *count = 1; *size = sizeof(VIDEO_STREAM_CONFIG_CAPS); return S_OK;
+}
+STDMETHODIMP UCamCapturePin::GetStreamCaps(int index, AM_MEDIA_TYPE** mt, BYTE* caps) {
+    if (!mt || !caps) return E_POINTER;
+    if (index != 0) return S_FALSE;
+    HRESULT hr = GetFormat(mt); if (FAILED(hr)) return hr;
+    auto c = reinterpret_cast<VIDEO_STREAM_CONFIG_CAPS*>(caps);
+    ZeroMemory(c, sizeof(*c)); c->guid = FORMAT_VideoInfo;
+    c->InputSize = c->MinCroppingSize = c->MaxCroppingSize = c->MinOutputSize = c->MaxOutputSize = {1920,1080};
+    c->OutputGranularityX = c->OutputGranularityY = 1;
+    c->MinFrameInterval = c->MaxFrameInterval = 333333;
+    c->MinBitsPerSecond = c->MaxBitsPerSecond = 1920 * 1080 * 12 * 30;
+    return S_OK;
+}
+STDMETHODIMP UCamCapturePin::Get(REFGUID set, DWORD id, LPVOID, DWORD, LPVOID data, DWORD size, DWORD* returned) {
+    if (set != AMPROPSETID_Pin || id != AMPROPERTY_PIN_CATEGORY) return E_PROP_ID_UNSUPPORTED;
+    if (returned) *returned = sizeof(GUID);
+    if (!data) return S_OK;
+    if (size < sizeof(GUID)) return E_UNEXPECTED;
+    *static_cast<GUID*>(data) = PIN_CATEGORY_CAPTURE; return S_OK;
+}
+STDMETHODIMP UCamCapturePin::QuerySupported(REFGUID set, DWORD id, DWORD* support) {
+    if (!support) return E_POINTER;
+    if (set != AMPROPSETID_Pin || id != AMPROPERTY_PIN_CATEGORY) return E_PROP_ID_UNSUPPORTED;
+    *support = KSPROPERTY_SUPPORT_GET; return S_OK;
+}
