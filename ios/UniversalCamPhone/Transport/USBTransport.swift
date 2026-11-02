@@ -173,7 +173,14 @@ final class USBTransport {
         let packet = makeFramePacket(streamType: .video, payload: frame.data, ptsUs: frame.ptsUs, flags: flags)
         queue.async { [self] in
             guard let conn = connection else { return }
-            guard sendsInFlight < Self.maxSendsInFlight else { return }
+            if sendsInFlight >= Self.maxSendsInFlight {
+                waitingForVideoKeyframe = true
+                return
+            }
+            if waitingForVideoKeyframe {
+                guard frame.isKeyframe else { return }
+                waitingForVideoKeyframe = false
+            }
             sendWithFlowControl(conn, data: packet)
         }
     }
